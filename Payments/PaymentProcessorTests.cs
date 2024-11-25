@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using OOP_ecommerce.BaseModels;
+using OOP_ecommerce.Exceptions;
 
 namespace OOP_ecommerce.Tests
 {
@@ -61,10 +62,10 @@ namespace OOP_ecommerce.Tests
             _mockOrder.IsAuthorized = false;
 
             // Act
-            var payment = _paymentProcessor.CreatePayment(_mockOrder.OrderId, _mockPaymentProcessor.Object);
+            Action act = () => _paymentProcessor.CreatePayment(_mockOrder.OrderId, _mockPaymentProcessor.Object);
 
             // Assert
-            Assert.Null(payment); // No se debe crear el pago si la orden no está autorizada
+            var exception = Assert.Throws<PaymentCreationException>(act);
         }
 
         [Fact]
@@ -97,9 +98,10 @@ namespace OOP_ecommerce.Tests
             _mockPaymentProcessor.Setup(p => p.VerifyPayment(payment.PaymentId, payment.Amount, "tokenSesion")).Returns(false);
 
             // Act
-            _paymentProcessor.ConfirmPayment(payment.PaymentId, _mockPaymentProcessor.Object);
+            Action act = () => _paymentProcessor.ConfirmPayment(payment.PaymentId, _mockPaymentProcessor.Object);
 
             // Assert
+            var exception = Assert.Throws<PaymentConfirmationException>(act);
             Assert.False(payment.IsSuccessfullPayment); // El pago no debe ser exitoso
             Assert.False(_mockOrder.IsPaid); // La orden no debe marcarse como pagada
         }

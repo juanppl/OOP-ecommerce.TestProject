@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using OOP_ecommerce.BaseModels;
+using OOP_ecommerce.Exceptions;
 
 namespace OOP_ecommerce.Tests
 {
@@ -58,10 +59,10 @@ namespace OOP_ecommerce.Tests
             var tokenSesion = "valid_token";
 
             // Act
-            var result = _orderManagment.AutorizarOrden(orderId, tokenSesion);
+            Action act = () => _orderManagment.AutorizarOrden(orderId, tokenSesion);
 
             // Assert
-            Assert.False(result);
+            var exception = Assert.Throws<OrderAuthorizationException>(act);
         }
 
         [Fact]
@@ -70,20 +71,19 @@ namespace OOP_ecommerce.Tests
             // Arrange
             var userId = _adminUser.UserId; // Usamos el UserId del adminUser
             var products = new List<Product> { _mockProduct };
-            var order = _orderManagment.CreateOrder(userId, products); // Create order
-            _orderManagment.AgregarUsuario(_adminUser); // Add user to system
 
-            // Simular un usuario no autenticado
             _adminUser = new AdminUser("John", "Doe", "john.doe@example.com", "password", "johndoe", "bio", false, new List<string>(), new List<int>())
             {
                 UserId = userId
             };
+            _orderManagment.AgregarUsuario(_adminUser);
+            var order = _orderManagment.CreateOrder(userId, products);
 
             // Act
-            var result = _orderManagment.AutorizarOrden(order.OrderId, "invalid_token");
+            Action act = () => _orderManagment.AutorizarOrden(order.OrderId, "invalid_token");
 
             // Assert
-            Assert.False(result);
+            var exception = Assert.Throws<OrderAuthorizationException>(act);
         }
 
         [Fact]
@@ -92,7 +92,6 @@ namespace OOP_ecommerce.Tests
             // Arrange
             var userId = _adminUser.UserId; // Usamos el UserId del adminUser
             var products = new List<Product> { _mockProduct };
-            var order = _orderManagment.CreateOrder(userId, products); // Create order
             // Simular un usuario autenticado con el token correcto
             _adminUser = new AdminUser("John", "Doe", "john.doe@example.com", "password", "johndoe", "bio", true, new List<string>(), new List<int>())
             {
@@ -100,7 +99,7 @@ namespace OOP_ecommerce.Tests
             };
             _adminUser.setTokenSession("valid_token");
             _orderManagment.AgregarUsuario(_adminUser); // Add user to system
-
+            var order = _orderManagment.CreateOrder(userId, products); // Create order
 
             // Act
             var result = _orderManagment.AutorizarOrden(order.OrderId, "valid_token");
